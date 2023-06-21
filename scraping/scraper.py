@@ -83,26 +83,19 @@ def getpageobjects_p(url):
     return data
 
 def getpagetext_p(url):
+    text = ''
     # Define a list of valid tag names
     valid_tags = ['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'p', 'ul', 'ol', 'li']
-    i = 0
-    for url in listofurls:
-        nextentry = ''
-        article = contentfinder(url)[0]
-        if article is None: continue
-        for element in article.find_all():
-            # Check if the element is part of the readable article content and has a valid tag name
-            if element.name in valid_tags:
-                # Print the name of the element and its text content
-                nextentry = nextentry + element.get_text(strip=True) + '\n'
-                if len(nextentry)>2000:
-                    if len(nextentry)>4000:
-                        continue
-                    return nextentry, listofurls.index(url)
-                # print(element.name, ":", element.get_text(strip=True))
-
+    article = contentfinder(url)[0]
+    if article is None: return '', url
+    for element in article.find_all():
+        # Check if the element is part of the readable article content and has a valid tag name
+        if element.name in valid_tags:
+            # Print the name of the element and its text content
+            text+=element.get_text(strip=True) + '\n'
+            # print(element.name, ":", element.get_text(strip=True))
     #print('\n\n\n Got data from the urls! \n\n\n')
-    return '', None
+    return (text, url)
 
 def contentfinder_noJS(url):
 
@@ -157,11 +150,10 @@ def contentfinder_noJS(url):
     except requests.exceptions.Timeout:
         return None, None, None
 
-def getpagetext(url):
+def getpagetext_noJS(url):
     text = ''
     # Define a list of valid tag names
     valid_tags = ['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'p', 'ul', 'ol', 'li']
-    nextentry = ''
     article = contentfinder_noJS(url)[0]
     if article is None: return '', url
     for element in article.find_all():
