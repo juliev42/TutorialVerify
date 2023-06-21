@@ -308,10 +308,10 @@ def scrape_url(url, driver):
     urls = []
     host = get_host_and_path(url)[0]
     #print(host)
-    print('skipped url reporting')
-    # for anchor in anchors:
-    #     url_ = urlcheck(anchor[1], host)
-    #     if url_: urls.append(url_)
+    
+    for anchor in anchors:
+        url_ = urlcheck(anchor[1], host)
+        if url_: urls.append(url_)
 
     try: 
         res = article_to_tree(soup, url, title)

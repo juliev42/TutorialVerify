@@ -24,7 +24,11 @@ conn = psycopg2.connect(DATABASE_URL)
 # create a cursor
 cur = conn.cursor()
 
-# if table data does not exist, create it. The columns that it contains are url, text, 
+# if table data does not exist, create it. The columns that it contains are url, headingtext, listofsubheadingids, and listofparagraphids
+cur.execute("CREATE TABLE IF NOT EXISTS data (url text, headingtext text, listofsubheadingids text, listofparagraphids text)")
+
+# commit the changes
+conn.commit()
 
 # LANGCHAIN scraping logic
 
