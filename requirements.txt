@@ -4,3 +4,7 @@ langdetect
 psycopg2-binary
 pinecone-client
 courlan
+pinecone
+pandas
+streamlit
+numpy
