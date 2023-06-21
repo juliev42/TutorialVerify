@@ -3,13 +3,24 @@ from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from readability import Document
 from langdetect import detect
-from scrapingpipeline import anchorcheck, get_host_and_path
 from bs4 import BeautifulSoup, Comment
 from courlan import *
 
 chrome_options = Options()
 chrome_options.add_argument('--headless')
 driver = webdriver.Chrome('chromedriver', options=chrome_options)
+
+# checks if an element contains any anchors, returns a list of links and the associated text
+def anchorcheck(element):
+    anchors = element.find_all('a')
+    if anchors:
+        anchorlist = []
+        for anchor in anchors:
+            if anchor.has_attr('href'):
+                anchorlist.append([anchor.get_text(strip=True), anchor['href']])
+        return anchorlist
+    else:
+        return None
 
 def contentfinder(url, driver):
 
@@ -287,7 +298,7 @@ def tag_rank(tag, parent_tag):
 
     return idx1 - idx2
 
-def scrape_url(url, driver):
+def scrape_url(url, driver=driver):
 
     #response = requests.get(url)
     #soup = BeautifulSoup(response.text, "html.parser")
@@ -308,10 +319,10 @@ def scrape_url(url, driver):
     urls = []
     host = get_host_and_path(url)[0]
     #print(host)
-    
+
     for anchor in anchors:
         url_ = urlcheck(anchor[1], host)
-        if url_: urls.append(url_)
+        if url_: urls.append([anchor[0], url_])
 
     try: 
         res = article_to_tree(soup, url, title)
