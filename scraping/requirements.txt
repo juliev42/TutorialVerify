@@ -2,3 +2,4 @@ bs4
 selenium
 langdetect
 psycopg2-binary
+pinecone-client
