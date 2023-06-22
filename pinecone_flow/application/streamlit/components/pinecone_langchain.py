@@ -12,9 +12,10 @@ from langchain.vectorstores import Pinecone
 
 openai_api_key = os.getenv('OPENAI_API_KEY')
 pinecone_api_key = os.getenv('PINECONE_API_KEY')
+pinecone_index_name = os.getenv('PINECONE_INDEX_NAME')
 
 class LangChainPineconeClient:
-    def __init__(self, pinecone_key = pinecone_api_key, openai_key = openai_api_key, index_name):
+    def __init__(self, pinecone_key = pinecone_api_key, openai_key = openai_api_key, index_name=pinecone_index_name):
         ## Initialize with Pinecone API key and OpenAI API key, plus relevant index name
         pinecone.init(api_key=pinecone_key, environment='us-west4-gcp-free')
         openai.api_key = openai_key
@@ -48,7 +49,7 @@ class LangChainPineconeClient:
         ## View all indexes
         return pinecone.list_indexes()
     
-    def get_relevant_text(input, topic = "LangChain"):
+    def get_relevant_text(self, input, topic = "LangChain"):
         ## Get relevant text from input_text
         prompt = f'Extract text relevant to {topic} from the following document ' + input
         response = self.llm.run(prompt)
