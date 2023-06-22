@@ -54,6 +54,7 @@ for heading in headings:
     # get the sparse vector
     sparsevector = get_sparse_vector(texttoembed)
 
+    # index the vector
     upsert_response = index.upsert(
         vectors=[
             {'id': f'{heading[0]}',
