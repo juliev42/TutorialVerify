@@ -19,14 +19,16 @@ from langchain.vectorstores import Pinecone
 openai_api_key = os.getenv('OPENAI_API_KEY')
 pinecone_api_key = os.getenv('PINECONE_API_KEY')
 pinecone_index_name = os.getenv('PINECONE_INDEX_NAME')
+pinecone_environment = os.getenv('PINECONE_ENV')
 
 class LangChainPineconeClient:
     def __init__(self, pinecone_key = pinecone_api_key, openai_key = openai_api_key, index_name=pinecone_index_name):
         ## Initialize with Pinecone API key and OpenAI API key, plus relevant index name
-        pinecone.init(api_key=pinecone_key, environment='us-west4-gcp-free')
+        pinecone.init(api_key=pinecone_key, environment=pinecone_environment)
         openai.api_key = openai_key
 
         index = pinecone.Index(index_name)
+        self.index = index
         text_field = "text"
 
         embed = OpenAIEmbeddings(
