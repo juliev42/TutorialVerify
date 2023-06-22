@@ -3,8 +3,9 @@ import pandas as pd
 import numpy as np
 import os
 from streamlit_chat import message
+import openai
 
-
+##TODO use langchain pinecone client to implement flow here
 
 ## 
 st.title('Syllabot Verification')

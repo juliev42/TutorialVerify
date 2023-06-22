@@ -47,11 +47,7 @@ class LangChainPineconeClient:
             model_name='gpt-3.5-turbo',
             temperature=0.0)
         
-        self.qa =  RetrievalQA.from_chain_type(
-            llm=self.llm,
-            chain_type="stuff",
-            retriever=self.vectorstore.as_retriever()
-        )
+
 
         self.messages = [SystemMessage(content="You are a helpful assistant.")]
 
@@ -70,6 +66,7 @@ class LangChainPineconeClient:
         return response
     
     def get_relevant_pinecone_data(self, input):
+        ## TODO rewrite this + init to use pinecone query instead of langchain package
         qa_response = self.qa.run(input)
         return qa_response
     
