@@ -59,7 +59,7 @@ for heading in headings:
         vectors=[
             {'id': f'{heading[0]}',
              'values': densevector,
-             'sparse_values': sparsevector}
+             'sparse_values': sparsevector,}
         ],
         namespace = 'langchaindocs'
     )

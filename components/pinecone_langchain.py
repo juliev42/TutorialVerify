@@ -38,10 +38,6 @@ class LangChainPineconeClient:
         self.embed = embed
 
 
-        self.vectorstore = Pinecone(
-            index, embed.embed_query, text_field
-        )
-
         self.llm = ChatOpenAI(
             openai_api_key=openai_api_key,
             model_name='gpt-3.5-turbo',
@@ -74,16 +70,14 @@ class LangChainPineconeClient:
         relevant_text = self.get_relevant_text(input, topic)
         data = self.get_relevant_pinecone_data(relevant_text)
 
-        prompt = "Using the following source, verify that the text is up accurate."
+        prompt = "Using the following source, verify that the text is up to date and accurate."
         total_prompt = prompt + f' Source: {data}' + f' Text: {relevant_text}'
         context_ask = HumanMessage(content=total_prompt)
         self.messages.append(context_ask)
         response = self.llm(total_prompt)
         self.messages.append(response)
         return response
-    
-    def create_syllabus_content(self, input, topic):
-        pass
+
 
     def check_syllabus(self, syllabus):
         pass
