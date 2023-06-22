@@ -7,6 +7,12 @@ from langchain.chat_models import ChatOpenAI
 from langchain.chains import RetrievalQA
 from langchain.embeddings.openai import OpenAIEmbeddings
 
+from langchain.schema import (
+    SystemMessage,
+    HumanMessage,
+    AIMessage
+)
+
 
 from langchain.vectorstores import Pinecone
 
@@ -44,15 +50,20 @@ class LangChainPineconeClient:
             retriever=self.vectorstore.as_retriever()
         )
 
+        self.messages = [SystemMessage(content="You are a helpful assistant.")]
+
 
     def view_indexes(self):
         ## View all indexes
         return pinecone.list_indexes()
     
-    def get_relevant_text(self, input, topic = "LangChain"):
+    def get_relevant_text(self, input, topic = "LangChain or prompting LLMs with chains of text"):
         ## Get relevant text from input_text
         prompt = f'Extract text relevant to {topic} from the following document ' + input
-        response = self.llm.run(prompt)
+        first_message = HumanMessage(content=prompt)
+        self.messages.append(first_message)
+        response = self.llm(self.messages)
+        self.messages.append(response)
         return response
     
     def get_relevant_pinecone_data(self, input):
@@ -65,7 +76,10 @@ class LangChainPineconeClient:
 
         prompt = "Using the following source, verify that the text is up accurate."
         total_prompt = prompt + f' Source: {data}' + f' Text: {relevant_text}'
-        response = self.llm.run(total_prompt)
+        context_ask = HumanMessage(content=total_prompt)
+        self.messages.append(context_ask)
+        response = self.llm(total_prompt)
+        self.messages.append(response)
         return response
     
     def create_syllabus_content(self, input, topic):
