@@ -29,12 +29,13 @@ class LangChainPineconeClient:
 
         index = pinecone.Index(index_name)
         self.index = index
-        text_field = "text"
+        text_field = "text" #name of metadata field that contains text
 
         embed = OpenAIEmbeddings(
             model='text-embedding-ada-002',
             openai_api_key=openai_api_key
         )
+        self.embed = embed
 
 
         self.vectorstore = Pinecone(
