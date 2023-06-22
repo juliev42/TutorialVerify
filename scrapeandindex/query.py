@@ -31,19 +31,8 @@ def get_url_by_headingid(rowid, cur):
     url = select_row_by_index(heading[0], 'urls', '*')
     return url # list of items related to the url
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-def get_heading_by_rowid(rowid):
-    with conn.cursor() as cur:
 
-        cur.execute("SELECT * FROM headings WHERE rowid = %s", (rowid,))
-        heading = cur.fetchone()
-        return heading # list of items related to the heading
-=======
-def get_heading_by_rowid(rowid): # row id is the same as pineconeid here
-=======
 def get_heading_by_rowid(rowid, cur): # row id is the same as pineconeid here
->>>>>>> c1e28f2ba406b6ee5a427215e3b9934a2133d7e3
     cur.execute("SELECT * FROM headings WHERE rowid = %s", (rowid,))
     heading = cur.fetchone()
     return heading # list of items related to the heading
