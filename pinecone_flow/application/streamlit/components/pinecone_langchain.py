@@ -66,6 +66,13 @@ class LangChainPineconeClient:
         total_prompt = prompt + f' Source: {data}' + f' Text: {relevant_text}'
         response = self.llm.run(total_prompt)
         return response
+    
+    def create_syllabus_content(self, input, topic):
+        pass
+
+    def check_syllabus(self, syllabus):
+        pass
+
 
 
 
