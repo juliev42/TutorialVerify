@@ -1,4 +1,10 @@
 import psycopg2
+import os
+
+DATABASE_URL = os.environ['DATABASE_URL']
+conn = psycopg2.connect(DATABASE_URL)
+
+
 
 def select_row_by_index(index, tablename, columnname):
     with conn.cursor() as cur:
@@ -20,6 +26,8 @@ def get_url_from_heading_idx(heading_idx):
     return url # list of items related to the url
 
 def get_heading_by_rowid(rowid):
-    cur.execute("SELECT * FROM headings WHERE rowid = %s", (rowid,))
-    heading = cur.fetchone()
-    return heading # list of items related to the heading
+    with conn.cursor() as cur:
+
+        cur.execute("SELECT * FROM headings WHERE rowid = %s", (rowid,))
+        heading = cur.fetchone()
+        return heading # list of items related to the heading
