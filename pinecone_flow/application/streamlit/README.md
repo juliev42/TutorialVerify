@@ -1,4 +1,4 @@
-## Overall Functionality and Architecture
+## Overall Functionality
 
 1. User asks to either verify or create course materials
 2. Verify mode: 
