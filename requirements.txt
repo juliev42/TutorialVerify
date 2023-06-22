@@ -8,3 +8,7 @@ pinecone
 pandas
 streamlit
 numpy
+pinecone-text==0.4.2
+pyarrow
+torch==2.0.1
+tqdm

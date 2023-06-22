@@ -1,4 +1,4 @@
-## Overall Functionality and Architecture
+## Overall Functionality
 
 1. User asks to either verify or create course materials
 2. Verify mode: 
@@ -11,5 +11,3 @@
     - Search pinecone DB to get the most relevant related info from the database, checking against the most recent updates
     - Call GPT3.5 to synthesize a syllabus with the pinecone DB and relevant info 
     - Prompt to see if the user requires additional information
-
-
