@@ -44,4 +44,3 @@ def get_heading_by_rowid(rowid, cur): # row id is the same as pineconeid here
 
 # close the connection
 # conn.close()
->>>>>>> 98987a987d44e70c6dc41354e2a9a0229cbfdae5

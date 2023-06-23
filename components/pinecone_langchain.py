@@ -15,8 +15,11 @@ from langchain.schema import (
 )
 from langchain.vectorstores import Pinecone
 import scrapeandindex.sparsevectors as sv
+import scrapeandindex.query as query_sql
+
 import psycopg2
 
+currentdir = os.getcwd()
 parentdir = os.path.dirname(currentdir)
 sys.path.append(parentdir)
 
@@ -38,8 +41,6 @@ class LangChainPineconeClient:
         """
         ## Initialize with Pinecone API key and OpenAI API key, plus relevant index name
         pinecone.init(api_key=pinecone_key, environment=pinecone_env)
-        openai.api_key = openai_key
-
 
         index = pinecone.Index(index_name)
         self.index = index
@@ -52,21 +53,18 @@ class LangChainPineconeClient:
 
 
         self.llm = ChatOpenAI(
-            OPENAI_API_KEY=openai_key,
+            openai_api_key=openai_key,
             model_name='gpt-3.5-turbo',
             temperature=0.0)
         
-
+        ## Initialize messages for chat 
         self.messages = [SystemMessage(content="You are a helpful assistant.")]
 
-    def connect_to_sql_database(self, database_url=DATABASE_URL):
-        ## Connect to SQL database
+        ## Initialize connection to SQL database
         conn = psycopg2.connect(database_url)
-        cur = conn.cursor()
+        self.cur = conn.cursor()
 
         
-
-
     def view_indexes(self):
         ## View all indexes
         pinecone.list_indexes()
@@ -83,20 +81,43 @@ class LangChainPineconeClient:
         self.messages.append(first_message)
         response = self.llm(self.messages)
         self.messages.append(response)
-        return response
+        return response.content
     
     def get_relevant_pinecone_data(self, input):
-        ## TODO rewrite this + init to use pinecone query instead of langchain package
-        ## Get relevant data from pinecone
+        """
+        Get relevant data from Pinecone index
+        Args:
+            input (str): extracted text from input or another input 
+        Return: 
+            (str): relevant text from Pinecone index with source URL
+        """
+        ##TODO change to return multiple sources to check against
         embedded_query = self.embed.embed_query(input)
         query_results = self.index.query(namespace='langchaindocs', top_k=1, \
                                          vector=embedded_query, 
                                          sparse_vector = sv.get_sparse_vector(input))
-        
+        match_id = query_results['matches'][0]['id']
+        data = query_sql.get_heading_by_rowid(match_id, self.cur)
+        result_text = data[5]
+        try: #try to get source URL if it exists
+            url = query_sql.get_url_by_headingid(data[0], self.cur)
+            result_text = result_text + f' Source: {url}'
+        except:
+            pass
+        return result_text
 
-        return query_results
+
     
-    def ask_with_context(self, input, topic):
+    def ask_with_context(self, input, topic = "LangChain or prompting LLMs with chains of text"):
+        """
+            Calls get_relevant_text and get_relevant_pinecone_data to do the total text flow. 
+            This is the only function that needs to be called by the frontend
+            Args:
+                input (str): extracted text from input or another input 
+                topic (str): description of topic of text to be extracted
+            Return: 
+                (str): relevant text from Pinecone index with source URL
+        """
         relevant_text = self.get_relevant_text(input, topic)
         data = self.get_relevant_pinecone_data(relevant_text)
 
@@ -104,9 +125,10 @@ class LangChainPineconeClient:
         total_prompt = prompt + f' Source: {data}' + f' Text: {relevant_text}'
         context_ask = HumanMessage(content=total_prompt)
         self.messages.append(context_ask)
-        response = self.llm(total_prompt)
+        response = self.llm(self.messages)
         self.messages.append(response)
-        return response
+        overall_response = response.content + f' Source: {data}'
+        return overall_response
 
 
     def check_syllabus(self, syllabus):
