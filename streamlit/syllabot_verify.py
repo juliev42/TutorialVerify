@@ -55,7 +55,8 @@ if user_input and openai_api_key:
     st.session_state.messages.append({"role": "user", "content": user_input})
     message(user_input, is_user=True)
     #response = openai.ChatCompletion.create(model="gpt-3.5-turbo", messages=st.session_state.messages)
-    response = pilang.ask_with_context(user_input)
+    # response = pilang.ask_with_context(user_input)
+    response = pilang.get_potential_facts(user_input)
     #msg = response.choices[0].message
     msg = {"role": "assistant","content":response}
     st.session_state.messages.append(msg)

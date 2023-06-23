@@ -39,6 +39,7 @@ class InputUpdates:
 
         self.created_at = None
         # potential_facts is a dictionary of facts, with the key being index and the value being {fact: fact, name: factname, potentialupdate: potentialupdate}
+        self.raw_facts = ''
         self.potential_facts = {}
 
     def add_potential_facts(self, listofpotentialfacts):
@@ -165,9 +166,9 @@ class LangChainPineconeClient:
         response = self.llm4(self.getfactsmessages)
         self.getfactsmessages.append(response)
         list = response.content.split('\n')
-        print(response.content)
+        self.input_updates.raw_facts = response.content
         self.input_updates.add_potential_facts(list) # list item is in the form '- (item1, fact, factname)'
-        return self.input_updates.potential_facts
+        return self.input_updates.raw_facts
     
     # update based on the multipayer prompting
     def get_potential_updates(self, index):
