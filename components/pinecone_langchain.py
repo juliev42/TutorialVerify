@@ -91,7 +91,7 @@ class LangChainPineconeClient:
         Return: 
             (str): relevant text from Pinecone index with source URL
         """
-        ##TODO change to return multiple sources to check against
+        ##TODO change to return multiple sources to check against rather than just one
         embedded_query = self.embed.embed_query(input)
         query_results = self.index.query(namespace='langchaindocs', top_k=1, \
                                          vector=embedded_query, 
@@ -118,6 +118,7 @@ class LangChainPineconeClient:
             Return: 
                 (str): relevant text from Pinecone index with source URL
         """
+        ##TODO add a function call before this to break things down into subtopics first
         relevant_text = self.get_relevant_text(input, topic)
         data = self.get_relevant_pinecone_data(relevant_text)
 
