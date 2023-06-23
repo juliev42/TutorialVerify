@@ -65,6 +65,7 @@ class LangChainPineconeClient:
         ## Initialize connection to SQL database
         conn = psycopg2.connect(database_url)
         self.cur = conn.cursor()
+        self.conn = conn
 
         
     def view_indexes(self):
@@ -102,8 +103,9 @@ class LangChainPineconeClient:
         data = query_sql.get_heading_by_rowid(match_id, self.cur)
         result_text = data[5]
         try: #try to get source URL if it exists
-            url = query_sql.get_url_by_headingid(data[0], self.cur)
-            result_text = result_text + f' Source: {url}'
+            url = query_sql.get_url_by_headingid(match_id, self.conn)
+            web_str, verified, date = url #unpack tuple
+            result_text = result_text + f' Source: {web_str}'
         except:
             pass
         return result_text
