@@ -5,15 +5,29 @@ import os
 from streamlit_chat import message
 import openai
 
+from dotenv import load_dotenv
+
+load_dotenv()
+
 ##TODO use langchain pinecone client to implement flow here
 
 ## 
 st.title('Syllabot Verification')
 
-openai_api_key = os.getenv('OPENAI_API_KEY')
+try:
+    openai_api_key = os.getenv('OPENAI_API_KEY')
+except:
+    openai_api_key = None
+    raise Exception('OPENAI_API_KEY not found in environment variables')
 
 if "messages" not in st.session_state:
     st.session_state["messages"] = [{"role": "assistant", "content": "How can I help you?"}]
+
+with st.sidebar:
+    st.markdown("""
+    ## About this App
+    This app is a demo of using Pinecone to implement a chatbot. That processes a user's  course content and determines if it needs to be updated.
+    """)
 
 with st.form("chat_input", clear_on_submit=True):
     a, b = st.columns([4, 1])
@@ -24,7 +38,7 @@ with st.form("chat_input", clear_on_submit=True):
     )
     b.form_submit_button("Send", use_container_width=True)
 
-for msg in st.session_state.messages:
+for msg in st.session_state["messages"]:
     message(msg["content"], is_user=msg["role"] == "user")
 
     
