@@ -26,9 +26,11 @@ def select_row_by_index(index, tablename, columnname, conn):
 # url = select_row_by_index(heading[0], 'urls', '*')
 # print(url)
 
-def get_url_by_headingid(rowid, cur):
-    heading = cur.execute("SELECT urlid FROM headings WHERE rowid = %s", (rowid,))
-    url = select_row_by_index(heading[0], 'urls', '*')
+def get_url_by_headingid(rowid, conn):
+    with conn.cursor() as cur:
+        heading = cur.execute("SELECT urlid FROM headings WHERE rowid = %s", (rowid,))
+        heading = cur.fetchone()
+    url = select_row_by_index(heading[0], 'urls', '*', conn)
     return url # list of items related to the url
 
 
