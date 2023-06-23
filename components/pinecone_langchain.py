@@ -2,6 +2,7 @@ import pinecone
 import openai
 import os
 import sys
+from datetime import datetime
 
 import langchain
 from langchain.chat_models import ChatOpenAI
@@ -14,15 +15,17 @@ from langchain.schema import (
     AIMessage
 )
 from langchain.vectorstores import Pinecone
-import scrapeandindex.sparsevectors as sv
-import scrapeandindex.query as query_sql
-
-import psycopg2
 
 currentdir = os.getcwd()
 parentdir = os.path.dirname(currentdir)
 sys.path.append(parentdir)
 
+import scrapeandindex.sparsevectors as sv
+import scrapeandindex.query as query_sql
+from dotenv import load_dotenv
+load_dotenv()
+
+import psycopg2
 
 OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
 PINECONE_API_KEY= os.getenv('PINECONE_API_KEY')
@@ -30,7 +33,30 @@ PINECONE_INDEX_NAME = os.getenv('PINECONE_INDEX_NAME')
 PINECONE_ENV = os.getenv('PINECONE_ENV')
 DATABASE_URL = os.getenv('DATABASE_URL')
 
+class InputUpdates:
+
+    def __init__(self):
+
+        self.created_at = None
+        # potential_facts is a dictionary of facts, with the key being index and the value being {fact: fact, name: factname, potentialupdate: potentialupdate}
+        self.potential_facts = {}
+
+    def add_potential_facts(self, listofpotentialfacts):
+
+        self.created_at = datetime.now()
+        for i in range(len(listofpotentialfacts)):
+            templistitem = listofpotentialfacts[i]
+            templist = templistitem.split(',')
+            self.potential_facts[i] = {'fact': templist[1],
+                                       'name': templist[2]}
+            
+    def add_potential_update(self, index, update_text):
+            
+        if 'potentialupdate' not in self.potential_facts[index]:
+            self.potential_facts[index]['potentialupdate'] = update_text
+
 class LangChainPineconeClient:
+    
     def __init__(self, pinecone_key = PINECONE_API_KEY, openai_key = OPENAI_API_KEY, index_name=PINECONE_INDEX_NAME, pinecone_env=PINECONE_ENV, database_url=DATABASE_URL):
         """"
         Initialize LangChainPineconeClient with Pinecone API key and OpenAI API key, plus relevant index name
@@ -59,14 +85,26 @@ class LangChainPineconeClient:
             model_name='gpt-3.5-turbo',
             temperature=0.0)
         
+        self.llm4 = ChatOpenAI(
+            openai_api_key=openai_key,
+            model_name='gpt-4',
+            temperature=0.6,
+            max_tokens=256,
+            top_p=1,
+            frequency_penalty=0,
+            presence_penalty=0)
+        
         ## Initialize messages for chat 
         self.messages = [SystemMessage(content="You are a helpful assistant.")]
+        self.getfactsmessages = [SystemMessage(content="As an expert proofreader, list any independent objective points, in verbatim, based on the user's need and the user input that need to be verified and aren't explained in the input themselves. Make each list item into - According to the input, <<objective fact about the topic and the topic>>, <<fact name>>")]
+        self.getupdatesmessages = [SystemMessage(content="You are a fact checker and help experts keep their information up to date. Understand the user input, and compare it with the latest information attached. If the input is different or out-of-date, provide corrections with an explanation. If the latest information doesn't provide any explanation, say you couldn't find the latest information.")]
 
         ## Initialize connection to SQL database
         conn = psycopg2.connect(database_url)
         self.cur = conn.cursor()
         self.conn = conn
 
+        self.input_updates = InputUpdates()
         
     def view_indexes(self):
         ## View all indexes
@@ -110,7 +148,69 @@ class LangChainPineconeClient:
             pass
         return result_text
 
+    # update based on the multipayer prompting
+    def get_potential_facts(self, input):
+        """
+        potential facts are independent standalone info points in the user input that can be verified for accuracy
 
+        Args:
+            input (str): extracted text from input or another input
+        Return:
+            (list): list of potential facts
+        """
+        prompt = f'Need:\nTo see of the info is up to date\n\nInput:\n{input}'
+
+        first_message = HumanMessage(content=prompt)
+        self.getfactsmessages.append(first_message)
+        response = self.llm4(self.getfactsmessages)
+        self.getfactsmessages.append(response)
+        list = response.content.split('\n')
+        print(response.content)
+        self.input_updates.add_potential_facts(list) # list item is in the form '- (item1, fact, factname)'
+        return self.input_updates.potential_facts
+    
+    # update based on the multipayer prompting
+    def get_potential_updates(self, index):
+        """
+        potential updates are text that can be used to update the latest information
+
+        Args:
+            input (str): extracted text from input or another input
+        Return:
+            (list): list of potential updates
+        """
+        fact = self.input_updates.potential_facts[index]['fact']
+        data = self.get_relevant_pinecone_data(fact)
+        prompt = f'''Latest information: {data}
+
+        Input: {fact}'''
+        context_ask = HumanMessage(content=prompt)
+        self.getupdatesmessages.append(context_ask)
+        response = self.llm(self.getupdatesmessages)
+        self.getupdatesmessages.append(response)
+        overall_update = response.content
+        self.input_updates.add_potential_update(index, overall_update)
+        return self.input_updates.potential_facts[index]['potentialupdate']
+    
+    def get_all_updates(self):
+        """
+        get all updates from the input
+
+        Args:
+            input (str): extracted text from input or another input
+        Return:
+            (list): list of all updates
+        """
+
+        # get all potential facts
+        self.get_potential_facts()
+
+        # 'potentialupdate' not in self.input_updates.potential_facts[index] get the potential update
+        for index in range(len(self.input_updates.potential_facts)):
+            if 'potentialupdate' not in self.input_updates.potential_facts[index]:
+                self.get_potential_updates(index)
+
+        return self.input_updates.potential_facts
     
     def ask_with_context(self, input, topic = "LangChain or prompting LLMs with chains of text"):
         """
@@ -138,11 +238,3 @@ class LangChainPineconeClient:
 
     def check_syllabus(self, syllabus):
         pass
-
-
-
-
-       
-
-
-        

@@ -50,7 +50,6 @@ with st.form("chat_input", clear_on_submit=True):
 for msg in st.session_state["messages"]:
     message(msg["content"], is_user=msg["role"] == "user")
 
-    
 if user_input and openai_api_key:
     openai.api_key = openai_api_key
     st.session_state.messages.append({"role": "user", "content": user_input})
