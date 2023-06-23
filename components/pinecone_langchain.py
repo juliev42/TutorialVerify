@@ -38,6 +38,8 @@ class LangChainPineconeClient:
             pinecone_key (str): Pinecone API key
             openai_key (str): OpenAI API key
             index_name (str): name of Pinecone index to use
+            pinecone_env (str): Pinecone environment to use
+            database_url (str): URL of SQL database to use
         """
         ## Initialize with Pinecone API key and OpenAI API key, plus relevant index name
         pinecone.init(api_key=pinecone_key, environment=pinecone_env)
