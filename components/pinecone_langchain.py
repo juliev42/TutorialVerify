@@ -48,8 +48,8 @@ class InputUpdates:
         for i in range(len(listofpotentialfacts)):
             templistitem = listofpotentialfacts[i]
             templist = templistitem.split(',')
-            self.potential_facts[i] = {'fact': templist[1],
-                                       'name': templist[2]}
+            self.potential_facts[i] = {'fact': ' '.join(templist[1:len(templist)-1]),
+                                       'name': templist[-1]}
             
     def add_potential_update(self, index, update_text):
             
@@ -173,8 +173,7 @@ class LangChainPineconeClient:
         fact_list = response.content.split('\n')
         # Add the list of facts to the InputUpdates object
         self.input_updates.raw_facts = response.content
-        if len(fact_list)>1 and fact_list[0][0] != '-':
-            self.input_updates.add_potential_facts(fact_list) # list item is in the form '- (item1, fact, factname)'
+        self.input_updates.add_potential_facts(fact_list) # list item is in the form '- (item1, fact, factname)'
         return self.input_updates.raw_facts
     
     # update based on the multipayer prompting
