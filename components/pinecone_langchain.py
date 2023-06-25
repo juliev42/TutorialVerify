@@ -174,7 +174,7 @@ class LangChainPineconeClient:
         # Add the list of facts to the InputUpdates object
         self.input_updates.raw_facts = response.content
         self.input_updates.add_potential_facts(fact_list) # list item is in the form '- (item1, fact, factname)'
-        return '/n'.join([x['fact'] for x in self.input_updates.potential_facts.values()])
+        return '\n'.join([x['fact'] for x in self.input_updates.potential_facts.values()])
     
     # update based on the multipayer prompting
     def get_potential_updates(self, index):
