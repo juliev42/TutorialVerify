@@ -48,8 +48,8 @@ class InputUpdates:
         for i in range(len(listofpotentialfacts)):
             templistitem = listofpotentialfacts[i]
             templist = templistitem.split(',')
-            self.potential_facts[i] = {'fact': templist[1],
-                                       'name': templist[2]}
+            self.potential_facts[i] = {'fact': ' '.join(templist[1:len(templist)-1]),
+                                       'name': templist[-1]}
             
     def add_potential_update(self, index, update_text):
             
@@ -89,11 +89,12 @@ class LangChainPineconeClient:
         self.llm4 = ChatOpenAI(
             openai_api_key=openai_key,
             model_name='gpt-4',
-            temperature=0.6,
+            temperature=0.0,
             max_tokens=256,
             top_p=1,
             frequency_penalty=0,
-            presence_penalty=0)
+            presence_penalty=0
+            )
         
         ## Initialize messages for chat 
         self.messages = [SystemMessage(content="You are a helpful assistant.")]
@@ -144,10 +145,10 @@ class LangChainPineconeClient:
         try: #try to get source URL if it exists
             url = query_sql.get_url_by_headingid(match_id, self.conn)
             web_str, verified, date = url #unpack tuple
-            result_text = result_text + f' Source: {web_str}'
+            result_text = result_text
         except:
             pass
-        return result_text
+        return result_text, web_str, verified, date
 
     # update based on the multipayer prompting
     def get_potential_facts(self, input):
@@ -160,15 +161,20 @@ class LangChainPineconeClient:
             (list): list of potential facts
         """
         prompt = f'Need:\nTo see of the info is up to date\n\nInput:\n{input}'
-
+        # Set the initial prompt as the first message
         first_message = HumanMessage(content=prompt)
+        # Append the first message to the list of messages
         self.getfactsmessages.append(first_message)
+        # Get the response from the LLM in form of a list of facts
         response = self.llm4(self.getfactsmessages)
+        # Append the list of facts response to the list of messages
         self.getfactsmessages.append(response)
-        list = response.content.split('\n')
+        # Split the response into a list of facts by each line
+        fact_list = response.content.split('\n')
+        # Add the list of facts to the InputUpdates object
         self.input_updates.raw_facts = response.content
-        self.input_updates.add_potential_facts(list) # list item is in the form '- (item1, fact, factname)'
-        return self.input_updates.raw_facts
+        self.input_updates.add_potential_facts(fact_list) # list item is in the form '- (item1, fact, factname)'
+        return '\n'.join([x['fact'] for x in self.input_updates.potential_facts.values()])
     
     # update based on the multipayer prompting
     def get_potential_updates(self, index):
@@ -181,7 +187,7 @@ class LangChainPineconeClient:
             (list): list of potential updates
         """
         fact = self.input_updates.potential_facts[index]['fact']
-        data = self.get_relevant_pinecone_data(fact)
+        data, url, verified, date = self.get_relevant_pinecone_data(fact)
         prompt = f'''Latest information: {data}
 
         Input: {fact}'''
@@ -191,7 +197,8 @@ class LangChainPineconeClient:
         self.getupdatesmessages.append(response)
         overall_update = response.content
         self.input_updates.add_potential_update(index, overall_update)
-        return self.input_updates.potential_facts[index]['potentialupdate']
+        texttoreturn = f"{self.input_updates.potential_facts[index]['potentialupdate']}\n\nURL: {url}\nVerified: {verified}\nAs of: {date}"
+        return texttoreturn
     
     def get_all_updates(self):
         """
