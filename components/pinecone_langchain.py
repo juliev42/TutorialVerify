@@ -89,11 +89,12 @@ class LangChainPineconeClient:
         self.llm4 = ChatOpenAI(
             openai_api_key=openai_key,
             model_name='gpt-4',
-            temperature=0.6,
+            temperature=0.0,
             max_tokens=256,
             top_p=1,
             frequency_penalty=0,
-            presence_penalty=0)
+            presence_penalty=0
+            )
         
         ## Initialize messages for chat 
         self.messages = [SystemMessage(content="You are a helpful assistant.")]
@@ -160,14 +161,20 @@ class LangChainPineconeClient:
             (list): list of potential facts
         """
         prompt = f'Need:\nTo see of the info is up to date\n\nInput:\n{input}'
-
+        # Set the initial prompt as the first message
         first_message = HumanMessage(content=prompt)
+        # Append the first message to the list of messages
         self.getfactsmessages.append(first_message)
+        # Get the response from the LLM in form of a list of facts
         response = self.llm4(self.getfactsmessages)
+        # Append the list of facts response to the list of messages
         self.getfactsmessages.append(response)
-        list = response.content.split('\n')
+        # Split the response into a list of facts by each line
+        fact_list = response.content.split('\n')
+        # Add the list of facts to the InputUpdates object
         self.input_updates.raw_facts = response.content
-        self.input_updates.add_potential_facts(list) # list item is in the form '- (item1, fact, factname)'
+        if len(fact_list)>1 and fact_list[0][0] != '-':
+            self.input_updates.add_potential_facts(fact_list) # list item is in the form '- (item1, fact, factname)'
         return self.input_updates.raw_facts
     
     # update based on the multipayer prompting
