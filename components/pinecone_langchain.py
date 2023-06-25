@@ -27,10 +27,28 @@ load_dotenv()
 
 import psycopg2
 
-OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
+# To get streamlit secrets
+import streamlit as st
+
+# Open AI API key
+if not os.getenv('OPENAI_API_KEY'):
+        os.environ['OPENAI_API_KEY'] = st.secrets['OPENAI_API_KEY']
+OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')\
+# Pinecone API key
+if not os.getenv('PINECONE_API_KEY'):
+        os.environ['PINECONE_API_KEY'] = st.secrets['PINECONE_API_KEY']
 PINECONE_API_KEY= os.getenv('PINECONE_API_KEY')
+# Pinecone index name
+if not os.getenv('PINECONE_INDEX_NAME'):
+        os.environ['PINECONE_INDEX_NAME'] = st.secrets['PINECONE_INDEX_NAME']
 PINECONE_INDEX_NAME = os.getenv('PINECONE_INDEX_NAME')
+# Pinecone environment
+if not os.getenv('PINECONE_ENV'):
+        os.environ['PINECONE_ENV'] = st.secrets['PINECONE_ENV']
 PINECONE_ENV = os.getenv('PINECONE_ENV')
+# Database URL
+if not os.getenv('DATABASE_URL'):
+        os.environ['DATABASE_URL'] = st.secrets['DATABASE_URL']
 DATABASE_URL = os.getenv('DATABASE_URL')
 
 class InputUpdates:

@@ -24,6 +24,8 @@ if 'pilang' not in st.session_state:
 
 # Try to get the OpenAI API key from the environment variables
 try:
+    if not os.getenv('OPENAI_API_KEY'):
+        os.environ['OPENAI_API_KEY'] = st.secrets['OPENAI_API_KEY']
     openai_api_key = os.getenv('OPENAI_API_KEY')
 except:
     openai_api_key = None
