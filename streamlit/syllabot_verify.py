@@ -18,7 +18,9 @@ sys.path.append(parentdir)
 
 # Import the custom python module for interacting with Pinecone and OpenAI
 import components.pinecone_langchain as plc
-pilang = plc.LangChainPineconeClient()
+
+if 'pilang' not in st.session_state:
+    st.session_state.pilang = plc.LangChainPineconeClient()
 
 # Try to get the OpenAI API key from the environment variables
 try:
@@ -33,9 +35,71 @@ st.set_page_config(layout='wide')
 # Set the title of the app
 st.title('Syllabot Verification')
 
+if 'block' not in st.session_state:
+    st.session_state.block = False
+
+if 'listofupdates' not in st.session_state:
+    st.session_state['listofupdates'] = []
 
 if "messages" not in st.session_state:
     st.session_state["messages"] = [{"role": "assistant", "content": "How can I help you?"}]
+
+if 'whichupdate' not in st.session_state:
+    st.session_state.whichupdate = None
+
+i = 0
+for msg in st.session_state["messages"]:
+    message(msg["content"], is_user=msg["role"] == "user", key = i)
+    i += 1
+
+# Intialize a holder for the input box
+holder = st.empty()
+user_input = None
+# Use the holder to create a form which we will hide later after the user submits
+if not st.session_state.block:
+    with holder.form("chat_input", clear_on_submit=True):
+        a, b = st.columns([4, 1])
+        user_input = a.text_input(
+            label="Your message:",
+            placeholder="What would you like to verify about LangChain?",
+            label_visibility="collapsed",
+        )
+        b.form_submit_button("Send", use_container_width=True)
+
+if user_input and openai_api_key and not st.session_state.block:
+    st.session_state.block = True
+    user_input = user_input.strip()
+    openai.api_key = openai_api_key
+    holder.empty() # Remove the input box from the app
+    st.session_state.messages.append({"role": "user", "content": user_input})
+    message(user_input, is_user=True)
+    #response = openai.ChatCompletion.create(model="gpt-3.5-turbo", messages=st.session_state.messages)
+    # response = pilang.ask_with_context(user_input)
+    response = st.session_state.pilang.get_potential_facts(user_input)
+    st.session_state['listofupdates'] = [x['name'] for x in st.session_state.pilang.input_updates.potential_facts.values()]
+    #msg = response.choices[0].message
+    msg = {"role": "assistant","content":response}
+    st.session_state.messages.append(msg)
+    message(msg['content'])
+
+def get_update():
+    # get the pilang.input_updates.potential_facts object where the name is equal to the text
+    text = st.session_state['selectbox']
+    st.session_state.messages.append({"role": "user", "content": text})
+    # message(text, is_user=True)
+    dict_ = st.session_state.pilang.input_updates.potential_facts
+    key = None
+    for key, value in dict_.items():
+        if value['name'] == text:
+            key = key
+            break
+    x = st.session_state.pilang.get_potential_updates(key)
+    n = f"Update: {text} \n\n {x}"
+    st.session_state.messages.append({"role": "assistant", "content": n})
+    # message(n)
+
+with st.sidebar:
+    st.session_state.whichupdate = st.selectbox('Select an update to view', st.session_state['listofupdates'], on_change=get_update, key='selectbox')
 
 with st.sidebar:
     st.markdown("""
@@ -49,32 +113,3 @@ with st.sidebar:
     - https://medium.com/databutton/getting-started-with-langchain-a-powerful-tool-for-working-with-large-language-models-286419ba0842
     - https://towardsdatascience.com/a-gentle-intro-to-chaining-llms-agents-and-utils-via-langchain-16cd385fca81
     """)
-
-
-for msg in st.session_state["messages"]:
-    message(msg["content"], is_user=msg["role"] == "user")
-
-# Intialize a holder for the input box
-holder = st.empty()
-# Use the holder to create a form which we will hide later after the user submits
-with holder.form("chat_input", clear_on_submit=True):
-    a, b = st.columns([4, 1])
-    user_input = a.text_input(
-        label="Your message:",
-        placeholder="What would you like to verify about LangChain?",
-        label_visibility="collapsed",
-    )
-    b.form_submit_button("Send", use_container_width=True)
-
-if user_input and openai_api_key:
-    holder.empty() # Remove the input box from the app
-    openai.api_key = openai_api_key
-    st.session_state.messages.append({"role": "user", "content": user_input})
-    message(user_input, is_user=True)
-    #response = openai.ChatCompletion.create(model="gpt-3.5-turbo", messages=st.session_state.messages)
-    # response = pilang.ask_with_context(user_input)
-    response = pilang.get_potential_facts(user_input)
-    #msg = response.choices[0].message
-    msg = {"role": "assistant","content":response}
-    st.session_state.messages.append(msg)
-    message(msg['content'])
